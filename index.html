@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATS Resume Matcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <!-- Grid background -->
+  <div class="grid-bg"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <span class="logo-bracket">[</span>ATS<span class="logo-accent">_SIM</span><span class="logo-bracket">]</span>
+    </div>
+    <nav class="nav-tags">
+      <span class="tag">DP Algorithm</span>
+      <span class="tag">LCS Matching</span>
+      <span class="tag">Edit Distance</span>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-label">Resume Intelligence Engine</div>
+    <h1 class="hero-title">Beat the<br /><span class="accent-text">ATS Scanner</span></h1>
+    <p class="hero-sub">Paste your resume + job description. Get instant keyword gap analysis powered by Dynamic Programming & LCS algorithms.</p>
+  </section>
+
+  <!-- Main Form -->
+  <main class="container">
+    <div class="input-grid">
+
+      <!-- Resume Input -->
+      <div class="input-card" id="resume-card">
+        <div class="card-header">
+          <span class="card-num">01</span>
+          <span class="card-label">YOUR RESUME</span>
+          <span class="card-hint">paste full text</span>
+        </div>
+        <textarea id="resume-input" placeholder="Paste your resume content here...
+
+Include your skills, experience, education, and any relevant keywords from your background." spellcheck="false"></textarea>
+        <div class="char-count" id="resume-count">0 words</div>
+      </div>
+
+      <!-- Job Description Input -->
+      <div class="input-card" id="jd-card">
+        <div class="card-header">
+          <span class="card-num">02</span>
+          <span class="card-label">JOB DESCRIPTION</span>
+          <span class="card-hint">paste full JD</span>
+        </div>
+        <textarea id="jd-input" placeholder="Paste the job description here...
+
+Include all requirements, responsibilities, and qualifications listed in the posting." spellcheck="false"></textarea>
+        <div class="char-count" id="jd-count">0 words</div>
+      </div>
+    </div>
+
+    <!-- Analyze Button -->
+    <div class="action-area">
+      <button class="analyze-btn" id="analyze-btn" onclick="analyzeResume()">
+        <span class="btn-text">RUN ANALYSIS</span>
+        <span class="btn-icon">→</span>
+      </button>
+      <div class="algo-note">Powered by Edit Distance + LCS Dynamic Programming</div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading" id="loading">
+      <div class="loading-bar"><div class="loading-fill" id="loading-fill"></div></div>
+      <div class="loading-text">Running DP algorithms...</div>
+    </div>
+
+    <!-- Results Section -->
+    <section class="results" id="results" style="display:none;">
+
+      <!-- Score Header -->
+      <div class="results-header">
+        <div class="results-label">// ANALYSIS COMPLETE</div>
+      </div>
+
+      <!-- Score Cards Row -->
+      <div class="scores-row">
+        <div class="score-card main-score">
+          <div class="score-title">ATS SCORE</div>
+          <div class="score-ring-wrap">
+            <svg class="score-ring" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="50"
+                stroke-dasharray="314"
+                stroke-dashoffset="314"/>
+            </svg>
+            <div class="score-number" id="ats-score-display">0%</div>
+          </div>
+          <div class="score-verdict" id="score-verdict">—</div>
+        </div>
+
+        <div class="score-metrics">
+          <div class="metric-card">
+            <div class="metric-label">EDIT DISTANCE SIMILARITY</div>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar"><div class="metric-fill" id="similarity-bar"></div></div>
+              <div class="metric-val" id="similarity-val">—</div>
+            </div>
+            <div class="metric-algo">Algorithm: Dynamic Programming O(m×n)</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-label">LCS KEYWORD MATCH</div>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar"><div class="metric-fill lcs-fill" id="lcs-bar"></div></div>
+              <div class="metric-val" id="lcs-val">—</div>
+            </div>
+            <div class="metric-algo">Algorithm: Longest Common Subsequence</div>
+          </div>
+
+          <div class="metric-card stat-row">
+            <div class="stat-item">
+              <div class="stat-num" id="matched-count">0</div>
+              <div class="stat-label">Keywords Matched</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-num red" id="missing-count">0</div>
+              <div class="stat-label">Keywords Missing</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-num" id="lcs-raw">0</div>
+              <div class="stat-label">LCS Length</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Keywords Section -->
+      <div class="keywords-grid">
+        <!-- Missing Keywords -->
+        <div class="keywords-card missing-card">
+          <div class="kw-header">
+            <span class="kw-icon">✕</span>
+            <span class="kw-title">MISSING KEYWORDS</span>
+            <span class="kw-badge red" id="missing-badge">0</span>
+          </div>
+          <div class="kw-note">Add these to your resume to improve ATS score</div>
+          <div class="kw-tags" id="missing-tags"></div>
+        </div>
+
+        <!-- Matched Keywords -->
+        <div class="keywords-card matched-card">
+          <div class="kw-header">
+            <span class="kw-icon">✓</span>
+            <span class="kw-title">MATCHED KEYWORDS</span>
+            <span class="kw-badge green" id="matched-badge">0</span>
+          </div>
+          <div class="kw-note">These keywords are already present in your resume</div>
+          <div class="kw-tags" id="matched-tags"></div>
+        </div>
+      </div>
+
+      <!-- Tips Section -->
+      <div class="tips-section" id="tips-section"></div>
+
+      <!-- Reset -->
+      <div class="reset-area">
+        <button class="reset-btn" onclick="resetForm()">← ANALYZE ANOTHER</button>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <span>ATS Simulator</span>
+    <span class="footer-sep">|</span>
+    <span>Edit Distance · LCS · Dynamic Programming</span>
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
